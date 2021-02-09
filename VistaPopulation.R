@@ -47,8 +47,8 @@ tripsGrouped <- tripsPorcessed %>%
             `Pickup/Dropoff/Deliver`=sum(`Pickup/Dropoff/Deliver`*weight),
             weight=mean(weight))
 
-# Age group 0-15: Children, 15-40: Working Age Category 1, 
-# 40-65: Working Age Category 2, 65+: Over 65
+# Age group 0-15: Children, 15-40: WORKINGAGE15to39, 
+# 40-65: WORKINGAGE40to64, 65+: Over 65
 personsJoined <- persons %>% 
   dplyr::select(PERSID,AGE, SEX, ANYWORK) %>% 
   left_join(tripsGrouped, by="PERSID") %>% 
@@ -59,7 +59,7 @@ personsJoined <- persons %>%
   mutate(AGEGroup=ifelse(         64<AGE ,"OVER65"          , AGEGroup)) 
 
 # Plot trip lenght total
-plot <- personsJoined %>% 
+g <- personsJoined %>% 
   filter(NUMTRIPS>0) %>% 
   slice(rep(1:n(), each = round(weight))) %>%  # repeating rows based on the weights
   ggplot(aes(x=NUMTRIPS)) +
