@@ -53,10 +53,10 @@ personsJoined <- persons %>%
   dplyr::select(PERSID,AGE, SEX, ANYWORK) %>% 
   left_join(tripsGrouped, by="PERSID") %>% 
   mutate_if(is.numeric, ~replace(., is.na(.), 0)) %>%  # changing NAs to 0
-  mutate(AGEGroup=ifelse(AGE<15          ,"CHILDREN"   , "NA")) %>% 
-  mutate(AGEGroup=ifelse(AGE<40 & 14<AGE ,"WORINGAGE1" , AGEGroup)) %>% 
-  mutate(AGEGroup=ifelse(AGE<65 & 39<AGE ,"WORINGAGE2" , AGEGroup)) %>% 
-  mutate(AGEGroup=ifelse(         64<AGE ,"OVER65"     , AGEGroup)) 
+  mutate(AGEGroup=ifelse(AGE<15          ,"CHILDREN"        , "NA")) %>% 
+  mutate(AGEGroup=ifelse(AGE<40 & 14<AGE ,"WORINGAGE15to39" , AGEGroup)) %>% 
+  mutate(AGEGroup=ifelse(AGE<65 & 39<AGE ,"WORINGAGE40to64" , AGEGroup)) %>% 
+  mutate(AGEGroup=ifelse(         64<AGE ,"OVER65"          , AGEGroup)) 
 
 # Plot trip lenght total
 plot <- personsJoined %>% 
@@ -68,7 +68,7 @@ plot <- personsJoined %>%
 ggsave("tripLength.pdf")
 
 TripProbablities <- personsJoined %>% 
-  group_by(SEX,AGEGroup, ANYWORK) %>% 
+  group_by(SEX,AGEGroup) %>% 
   summarise(TripLength= mean(NUMTRIPS), TripLenghtSD=sd(NUMTRIPS),
             Work=sum(Work), Study=sum(Study),
             Shop=sum(Shop), Personal=sum(Personal),
