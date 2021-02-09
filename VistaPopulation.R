@@ -17,8 +17,8 @@ trips <- read_csv("./input/T_VISTA1218_V1.csv") # VISTA 2012-18 trips
 tripsPorcessed <- trips %>% 
   # Using both weekend and weekday weights as it seems to be what demand algorithm
   # is using, we might want to change it later
-  mutate(weight                  =ifelse(is.na(WDTRIPWGT),
-                                         WETRIPWGT, WDTRIPWGT)) %>% 
+  mutate(weight                  =ifelse(!is.na(WDTRIPWGT),
+                                         WDTRIPWGT,0)) %>% 
   mutate(Work                    =ifelse(ORIGPURP1=="Work Related",
                                          yes=1, no=0)) %>% 
   mutate(Study                   =ifelse(ORIGPURP1=="Education",
@@ -60,11 +60,11 @@ personsJoined <- persons %>%
 
 # Plot trip lenght total
 g <- personsJoined %>% 
-  filter(NUMTRIPS>0) %>% 
+  filter(NUMTRIPS>0 | weight >0) %>% 
   slice(rep(1:n(), each = round(weight))) %>%  # repeating rows based on the weights
   ggplot(aes(x=NUMTRIPS)) +
   geom_histogram(binwidth = 1)
-
+g
 ggsave("tripLength.pdf")
 
 TripProbablities <- personsJoined %>% 
