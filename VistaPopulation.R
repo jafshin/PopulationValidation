@@ -7,9 +7,12 @@ library(ggplot2)
 
 # Reading inputs ----------------------------------------------------------
 
+# VISTA
 persons <- read_csv("./input/P_VISTA1218_V1.csv") # VISTA 2012-18 persons
 trips <- read_csv("./input/T_VISTA1218_V1.csv") # VISTA 2012-18 trips
-#vista_s <- read_csv("./input/S_VISTA1218_V1.csv") # VISTA 2012-18 stops
+
+# Synthetic population: Reading plan from step 3
+plans <- read_csv("./input/3.plan/plan.csv")
 
 # Using ORIGPURP1 as the main variable for trip type
 # Only included trip purposes that are meaningful for comparison
@@ -58,14 +61,6 @@ personsJoined <- persons %>%
   mutate(AGEGroup=ifelse(AGE<65 & 39<AGE ,"WORINGAGE40to64" , AGEGroup)) %>% 
   mutate(AGEGroup=ifelse(         64<AGE ,"OVER65"          , AGEGroup)) 
 
-# Plot trip lenght total
-g <- personsJoined %>% 
-  filter(NUMTRIPS>0 | weight >0) %>% 
-  slice(rep(1:n(), each = round(weight))) %>%  # repeating rows based on the weights
-  ggplot(aes(x=NUMTRIPS)) +
-  geom_histogram(binwidth = 1)
-g
-ggsave("tripLength.pdf")
 
 TripProbablities <- personsJoined %>% 
   group_by(SEX,AGEGroup) %>% 
@@ -83,3 +78,32 @@ TripProbablities <- personsJoined %>%
          `Pickup/Dropoff/Deliver`=`Pickup/Dropoff/Deliver`/sum(`Pickup/Dropoff/Deliver`))  
 
 write_csv(TripProbablities, "WeightedTripProbablities.csv")
+
+
+# Comparing Trip lengths --------------------------------------------------
+
+plansTripLength <- plans %>% 
+  group_by(PlanId) %>% 
+  summarise(NUMTRIPS=n()-1) %>% # #trips =  #activities-1
+  filter(NUMTRIPS>0) %>%
+  group_by(NUMTRIPS) %>%
+  summarise(count=n()) %>% 
+  mutate(pct = 100*count/sum(count))%>% 
+  mutate(source="Synthetic Pop")
+
+vistaTripLength <- personsJoined %>% 
+  filter( weight >0) %>% 
+  group_by(NUMTRIPS) %>% 
+  summarise(count=sum(round(weight))) %>% 
+  mutate(pct = 100*count/sum(count)) %>% 
+  mutate(source="VISTA")
+  
+
+vistaTripLength %>% 
+  rbind(plansTripLength) %>% 
+  ggplot(aes(x=factor(NUMTRIPS), y= pct, colour = source, fill= source)) +
+  geom_col(position = "dodge2") +
+  xlab("Trip Length (Number of trips for each person)")+
+  ylab("Percentage of all trips (%)")
+
+ggsave("tripLengthComparison.pdf")
